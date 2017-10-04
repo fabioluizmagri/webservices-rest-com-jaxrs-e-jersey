@@ -34,6 +34,8 @@ public class ClientTest {
 	@Test
 	public void testaQueAConexaoComOServidorFunciona() {
 
+		Client client = ClientBuilder.newClient();
+		WebTarget target = client.target("http://localhost:8080");
 		
 		Carrinho carrinho = new Carrinho();
 		carrinho.adiciona(new Produto(314L, "Tablet", 999, 1));
@@ -41,17 +43,15 @@ public class ClientTest {
 		carrinho.setCidade("Sao paulo");
 		String xml = carrinho.toXML();
 		
-		Client client = ClientBuilder.newClient();
-		WebTarget target = client.target("http://localhost:8080");
-		
-//		String conteudo = target.path("/carrinhos/1").request().get(String.class);		
-//		Carrinho carrinho = (Carrinho) new XStream().fromXML(conteudo);
-//		System.out.println(carrinho.getRua());
-		
 		Entity<String> entity = Entity.entity(xml, MediaType.APPLICATION_XML);
 		Response response = target.path("/carrinhos").request().post(entity);
 		
-		Assert.assertEquals("<status>sucesso</status>", response.readEntity(String.class));
+		Assert.assertEquals(201, response.getStatus());
+		
+		String location = response.getHeaderString("Location");
+		String conteudo = client.target(location).request().get(String.class);
+		
+		Assert.assertTrue(conteudo.contains("Tablet"));
 
 	}
 
